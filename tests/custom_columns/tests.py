@@ -17,7 +17,7 @@ class CustomColumnsTests(TestCase):
         cls.article.authors.set(cls.authors)
 
     def test_query_all_available_authors(self):
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Author.objects.all(),
             [
                 "Peter Jones",
@@ -33,7 +33,7 @@ class CustomColumnsTests(TestCase):
         )
 
     def test_filter_first_name(self):
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Author.objects.filter(first_name__exact="John"),
             [
                 "John Smith",
@@ -57,7 +57,7 @@ class CustomColumnsTests(TestCase):
             self.a1.last
 
     def test_get_all_authors_for_an_article(self):
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.article.authors.all(),
             [
                 "Peter Jones",
@@ -67,7 +67,7 @@ class CustomColumnsTests(TestCase):
         )
 
     def test_get_all_articles_for_an_author(self):
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.a1.article_set.all(),
             [
                 "Django lets you build web apps easily",
@@ -76,7 +76,7 @@ class CustomColumnsTests(TestCase):
         )
 
     def test_get_author_m2m_relation(self):
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.article.authors.filter(last_name="Jones"), ["Peter Jones"], str
         )
 

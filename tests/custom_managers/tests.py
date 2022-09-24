@@ -45,7 +45,7 @@ class CustomManagerTests(TestCase):
         """
         Test a custom Manager method.
         """
-        self.assertQuerysetEqual(Person.objects.get_fun_people(), ["Bugs Bunny"], str)
+        self.assertQuerySetEqual(Person.objects.get_fun_people(), ["Bugs Bunny"], str)
 
     def test_queryset_copied_to_default(self):
         """
@@ -84,7 +84,7 @@ class CustomManagerTests(TestCase):
             with self.subTest(manager_name=manager_name):
                 manager = getattr(Person, manager_name)
                 queryset = manager.filter()
-                self.assertQuerysetEqual(queryset, ["Bugs Bunny"], str)
+                self.assertQuerySetEqual(queryset, ["Bugs Bunny"], str)
                 self.assertIs(queryset._filter_CustomQuerySet, True)
 
                 # Specialized querysets inherit from our custom queryset.
@@ -117,7 +117,7 @@ class CustomManagerTests(TestCase):
         Queryset method doesn't override the custom manager method.
         """
         queryset = Person.custom_queryset_custom_manager.filter()
-        self.assertQuerysetEqual(queryset, ["Bugs Bunny"], str)
+        self.assertQuerySetEqual(queryset, ["Bugs Bunny"], str)
         self.assertIs(queryset._filter_CustomManager, True)
 
     def test_related_manager(self):
@@ -140,7 +140,7 @@ class CustomManagerTests(TestCase):
         """
         Custom managers respond to usual filtering methods
         """
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Book.published_objects.all(),
             [
                 "How to program",
@@ -162,7 +162,7 @@ class CustomManagerTests(TestCase):
             first_name="Droopy", last_name="Dog", fun=False, favorite_book=self.b1
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books.order_by("first_name").all(),
             [
                 "Bugs",
@@ -171,7 +171,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_people_favorite_books.all(),
             [
                 "Bugs",
@@ -179,7 +179,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="boring_people").all(),
             [
                 "Droopy",
@@ -187,7 +187,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="fun_people").all(),
             [
                 "Bugs",
@@ -214,7 +214,7 @@ class CustomManagerTests(TestCase):
             first_name="Droopy", last_name="Dog", fun=False, favorite_thing=self.b1
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things.all(),
             [
                 "Bugs",
@@ -223,7 +223,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_people_favorite_things.all(),
             [
                 "Bugs",
@@ -231,7 +231,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="boring_people").all(),
             [
                 "Droopy",
@@ -239,7 +239,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="fun_people").all(),
             [
                 "Bugs",
@@ -295,7 +295,7 @@ class CustomManagerTests(TestCase):
         self.assertIn("less_favorite_things", book._state.related_managers_cache)
         # "less_favorite_things" isn't available as a reverse related manager,
         # so never ends up in the cache.
-        self.assertQuerysetEqual(fun_person.favorite_things.all(), [book])
+        self.assertQuerySetEqual(fun_person.favorite_things.all(), [book])
         with self.assertRaises(AttributeError):
             fun_person.less_favorite_things
         self.assertIn("favorite_things", fun_person._state.related_managers_cache)
@@ -321,7 +321,7 @@ class CustomManagerTests(TestCase):
         )
         self.b1.fun_authors.add(droopy)
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors.order_by("first_name").all(),
             [
                 "Bugs",
@@ -330,7 +330,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_authors.order_by("first_name").all(),
             [
                 "Bugs",
@@ -338,7 +338,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="boring_people").all(),
             [
                 "Droopy",
@@ -346,7 +346,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="fun_people").all(),
             [
                 "Bugs",
@@ -374,7 +374,7 @@ class CustomManagerTests(TestCase):
         )
 
         self.b1.fun_people_favorite_books.remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.filter(favorite_book=self.b1),
             [
                 "Bugs",
@@ -385,7 +385,7 @@ class CustomManagerTests(TestCase):
         )
 
         self.b1.fun_people_favorite_books.remove(bugs, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.filter(favorite_book=self.b1),
             [
                 "Droopy",
@@ -397,7 +397,7 @@ class CustomManagerTests(TestCase):
         bugs.save()
 
         self.b1.fun_people_favorite_books.clear(bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.filter(favorite_book=self.b1),
             [
                 "Droopy",
@@ -419,7 +419,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager DOESN'T remove boring people.
         self.b1.favorite_books(manager="fun_people").remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="boring_people").all(),
             [
                 "Droopy",
@@ -429,7 +429,7 @@ class CustomManagerTests(TestCase):
         )
         # The boring manager DOES remove boring people.
         self.b1.favorite_books(manager="boring_people").remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="boring_people").all(),
             [],
             lambda c: c.first_name,
@@ -440,7 +440,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager ONLY clears fun people.
         self.b1.favorite_books(manager="fun_people").clear(bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="boring_people").all(),
             [
                 "Droopy",
@@ -448,7 +448,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_books(manager="fun_people").all(),
             [],
             lambda c: c.first_name,
@@ -467,7 +467,7 @@ class CustomManagerTests(TestCase):
         )
 
         self.b1.fun_people_favorite_things.remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.order_by("first_name").filter(
                 favorite_thing_id=self.b1.pk
             ),
@@ -480,7 +480,7 @@ class CustomManagerTests(TestCase):
         )
 
         self.b1.fun_people_favorite_things.remove(bugs, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.order_by("first_name").filter(
                 favorite_thing_id=self.b1.pk
             ),
@@ -494,7 +494,7 @@ class CustomManagerTests(TestCase):
         bugs.save()
 
         self.b1.fun_people_favorite_things.clear(bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FunPerson._base_manager.order_by("first_name").filter(
                 favorite_thing_id=self.b1.pk
             ),
@@ -518,7 +518,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager DOESN'T remove boring people.
         self.b1.favorite_things(manager="fun_people").remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="boring_people").all(),
             [
                 "Droopy",
@@ -529,7 +529,7 @@ class CustomManagerTests(TestCase):
 
         # The boring manager DOES remove boring people.
         self.b1.favorite_things(manager="boring_people").remove(droopy, bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="boring_people").all(),
             [],
             lambda c: c.first_name,
@@ -540,7 +540,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager ONLY clears fun people.
         self.b1.favorite_things(manager="fun_people").clear(bulk=bulk)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="boring_people").all(),
             [
                 "Droopy",
@@ -548,7 +548,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.favorite_things(manager="fun_people").all(),
             [],
             lambda c: c.first_name,
@@ -567,7 +567,7 @@ class CustomManagerTests(TestCase):
         self.b1.fun_authors.add(droopy)
 
         self.b1.fun_authors.remove(droopy)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_authors.through._default_manager.all(),
             [
                 "Bugs",
@@ -578,7 +578,7 @@ class CustomManagerTests(TestCase):
         )
 
         self.b1.fun_authors.remove(bugs)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_authors.through._default_manager.all(),
             [
                 "Droopy",
@@ -589,7 +589,7 @@ class CustomManagerTests(TestCase):
         self.b1.fun_authors.add(bugs)
 
         self.b1.fun_authors.clear()
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.fun_authors.through._default_manager.all(),
             [
                 "Droopy",
@@ -606,7 +606,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager DOESN'T remove boring people.
         self.b1.authors(manager="fun_people").remove(droopy)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="boring_people").all(),
             [
                 "Droopy",
@@ -617,7 +617,7 @@ class CustomManagerTests(TestCase):
 
         # The boring manager DOES remove boring people.
         self.b1.authors(manager="boring_people").remove(droopy)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="boring_people").all(),
             [],
             lambda c: c.first_name,
@@ -627,7 +627,7 @@ class CustomManagerTests(TestCase):
 
         # The fun manager ONLY clears fun people.
         self.b1.authors(manager="fun_people").clear()
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="boring_people").all(),
             [
                 "Droopy",
@@ -635,7 +635,7 @@ class CustomManagerTests(TestCase):
             lambda c: c.first_name,
             ordered=False,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.b1.authors(manager="fun_people").all(),
             [],
             lambda c: c.first_name,
@@ -704,7 +704,7 @@ class CustomManagerTests(TestCase):
         It will be inherited by the abstract model's children.
         """
         PersonFromAbstract.abstract_persons.create(objects="Test")
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             PersonFromAbstract.abstract_persons.all(),
             ["Test"],
             lambda c: c.objects,
@@ -718,7 +718,7 @@ class TestCars(TestCase):
         Car.cars.create(name="Corvette", mileage=21, top_speed=180)
         Car.cars.create(name="Neon", mileage=31, top_speed=100)
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Car._default_manager.order_by("name"),
             [
                 "Corvette",
@@ -726,7 +726,7 @@ class TestCars(TestCase):
             ],
             lambda c: c.name,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Car.cars.order_by("name"),
             [
                 "Corvette",
@@ -735,7 +735,7 @@ class TestCars(TestCase):
             lambda c: c.name,
         )
         # alternate manager
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Car.fast_cars.all(),
             [
                 "Corvette",
@@ -743,7 +743,7 @@ class TestCars(TestCase):
             lambda c: c.name,
         )
         # explicit default manager
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FastCarAsDefault.cars.order_by("name"),
             [
                 "Corvette",
@@ -751,7 +751,7 @@ class TestCars(TestCase):
             ],
             lambda c: c.name,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FastCarAsDefault._default_manager.all(),
             [
                 "Corvette",
@@ -759,7 +759,7 @@ class TestCars(TestCase):
             lambda c: c.name,
         )
         # explicit base manager
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FastCarAsBase.cars.order_by("name"),
             [
                 "Corvette",
@@ -767,7 +767,7 @@ class TestCars(TestCase):
             ],
             lambda c: c.name,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             FastCarAsBase._base_manager.all(),
             [
                 "Corvette",
@@ -855,4 +855,4 @@ class CustomManagersRegressTestCase(TestCase):
         """
         qs_custom = Person.custom_init_queryset_manager.all()
         qs_default = Person.objects.all()
-        self.assertQuerysetEqual(qs_custom, qs_default)
+        self.assertQuerySetEqual(qs_custom, qs_default)

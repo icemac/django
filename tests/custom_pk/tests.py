@@ -25,7 +25,7 @@ class BasicCustomPKTests(TestCase):
         """
         Both pk and custom attribute_name can be used in filter and friends
         """
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(pk=123),
             [
                 "Dan Jones",
@@ -33,7 +33,7 @@ class BasicCustomPKTests(TestCase):
             str,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(employee_code=123),
             [
                 "Dan Jones",
@@ -41,7 +41,7 @@ class BasicCustomPKTests(TestCase):
             str,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(pk__in=[123, 456]),
             [
                 "Fran Bones",
@@ -50,7 +50,7 @@ class BasicCustomPKTests(TestCase):
             str,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.all(),
             [
                 "Fran Bones",
@@ -59,10 +59,10 @@ class BasicCustomPKTests(TestCase):
             str,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Business.objects.filter(name="Sears"), ["Sears"], lambda b: b.name
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Business.objects.filter(pk="Sears"),
             [
                 "Sears",
@@ -74,7 +74,7 @@ class BasicCustomPKTests(TestCase):
         """
         Custom pk doesn't affect related_name based lookups
         """
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.business.employees.all(),
             [
                 "Fran Bones",
@@ -82,7 +82,7 @@ class BasicCustomPKTests(TestCase):
             ],
             str,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             self.fran.business_set.all(),
             [
                 "Sears",
@@ -94,7 +94,7 @@ class BasicCustomPKTests(TestCase):
         """
         Queries across tables, involving primary key
         """
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(business__name="Sears"),
             [
                 "Fran Bones",
@@ -102,7 +102,7 @@ class BasicCustomPKTests(TestCase):
             ],
             str,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(business__pk="Sears"),
             [
                 "Fran Bones",
@@ -111,14 +111,14 @@ class BasicCustomPKTests(TestCase):
             str,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Business.objects.filter(employees__employee_code=123),
             [
                 "Sears",
             ],
             lambda b: b.name,
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Business.objects.filter(employees__pk=123),
             [
                 "Sears",
@@ -126,7 +126,7 @@ class BasicCustomPKTests(TestCase):
             lambda b: b.name,
         )
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Business.objects.filter(employees__first_name__startswith="Fran"),
             [
                 "Sears",
@@ -186,7 +186,7 @@ class BasicCustomPKTests(TestCase):
         fran.last_name = "Jones"
         fran.save()
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Employee.objects.filter(last_name="Jones"),
             [
                 "Dan Jones",
