@@ -39,6 +39,11 @@ CSRF_COOKIE_MASKED_DEPRECATED_MSG = (
     "it will be removed in Django 5.0."
 )
 
+ASSERT_FORM_SET_ERROR_RENAMED_MSG = (
+    "assertFormsetError has been renamed to assertFormSetError. Support for "
+    "the old name will be deprecated in Django 5.0."
+)
+
 
 class SettingsReference(str):
     """

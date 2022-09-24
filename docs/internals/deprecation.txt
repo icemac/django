@@ -104,7 +104,7 @@ details on these changes.
   ``django.contrib.postgres.constraints.ExclusionConstraint`` will be removed.
 
 * The undocumented ability to pass ``errors=None`` to
-  ``SimpleTestCase.assertFormError()`` and ``assertFormsetError()`` will be
+  ``SimpleTestCase.assertFormError()`` and ``assertFormSetError()`` will be
   removed.
 
 * ``django.contrib.sessions.serializers.PickleSerializer`` will be removed.
@@ -126,7 +126,7 @@ details on these changes.
   removed.
 
 * Passing a response object and a form/formset name to
-  ``SimpleTestCase.assertFormError()`` and ``assertFormsetError()`` will no
+  ``SimpleTestCase.assertFormError()`` and ``assertFormSetError()`` will no
   longer be allowed.
 
 * The ``django.contrib.gis.admin.OpenLayersWidget`` will be removed.
