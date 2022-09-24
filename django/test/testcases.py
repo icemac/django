@@ -342,8 +342,7 @@ class SimpleTestCase(unittest.TestCase):
                         alias,
                     )
                 )
-                close_matches = get_close_matches(alias, list(connections))
-                if close_matches:
+                if close_matches := get_close_matches(alias, list(connections)):
                     message += " Did you mean %r?" % close_matches[0]
                 raise ImproperlyConfigured(message)
         return frozenset(cls.databases)
@@ -357,10 +356,11 @@ class SimpleTestCase(unittest.TestCase):
             connection = connections[alias]
             for name, operation in cls._disallowed_connection_methods:
                 message = cls._disallowed_database_msg % {
-                    "test": "%s.%s" % (cls.__module__, cls.__qualname__),
+                    "test": f"{cls.__module__}.{cls.__qualname__}",
                     "alias": alias,
                     "operation": operation,
                 }
+
                 method = getattr(connection, name)
                 setattr(connection, name, _DatabaseFailure(method, message))
 
@@ -674,7 +674,7 @@ class SimpleTestCase(unittest.TestCase):
         )
 
         self.assertEqual(
-            real_count, 0, msg_prefix + "Response should not contain %s" % text_repr
+            real_count, 0, f"{msg_prefix}Response should not contain {text_repr}"
         )
 
     def _check_test_client_response(self, response, attribute, method_name):
@@ -812,7 +812,7 @@ class SimpleTestCase(unittest.TestCase):
 
     def _assert_template_used(self, template_name, template_names, msg_prefix, count):
         if not template_names:
-            self.fail(msg_prefix + "No templates used to render the response")
+            self.fail(f"{msg_prefix}No templates used to render the response")
         self.assertTrue(
             template_name in template_names,
             msg_prefix + "Template '%s' was not a template used to render"
@@ -1025,7 +1025,7 @@ class SimpleTestCase(unittest.TestCase):
         )
 
         if dom1 != dom2:
-            standardMsg = "%s != %s" % (safe_repr(dom1, True), safe_repr(dom2, True))
+            standardMsg = f"{safe_repr(dom1, True)} != {safe_repr(dom2, True)}"
             diff = "\n" + "\n".join(
                 difflib.ndiff(
                     str(dom1).splitlines(),
@@ -1045,7 +1045,7 @@ class SimpleTestCase(unittest.TestCase):
         )
 
         if dom1 == dom2:
-            standardMsg = "%s == %s" % (safe_repr(dom1, True), safe_repr(dom2, True))
+            standardMsg = f"{safe_repr(dom1, True)} == {safe_repr(dom2, True)}"
             self.fail(self._formatMessage(msg, standardMsg))
 
     def assertInHTML(self, needle, haystack, count=None, msg_prefix=""):
@@ -1116,10 +1116,7 @@ class SimpleTestCase(unittest.TestCase):
             self.fail(self._formatMessage(msg, standardMsg))
         else:
             if not result:
-                standardMsg = "%s != %s" % (
-                    safe_repr(xml1, True),
-                    safe_repr(xml2, True),
-                )
+                standardMsg = f"{safe_repr(xml1, True)} != {safe_repr(xml2, True)}"
                 diff = "\n" + "\n".join(
                     difflib.ndiff(xml1.splitlines(), xml2.splitlines())
                 )
@@ -1139,10 +1136,7 @@ class SimpleTestCase(unittest.TestCase):
             self.fail(self._formatMessage(msg, standardMsg))
         else:
             if result:
-                standardMsg = "%s == %s" % (
-                    safe_repr(xml1, True),
-                    safe_repr(xml2, True),
-                )
+                standardMsg = f"{safe_repr(xml1, True)} == {safe_repr(xml2, True)}"
                 self.fail(self._formatMessage(msg, standardMsg))
 
 
@@ -1224,10 +1218,9 @@ class TransactionTestCase(SimpleTestCase):
     def _reset_sequences(self, db_name):
         conn = connections[db_name]
         if conn.features.supports_sequence_reset:
-            sql_list = conn.ops.sequence_reset_by_name_sql(
+            if sql_list := conn.ops.sequence_reset_by_name_sql(
                 no_style(), conn.introspection.sequence_list()
-            )
-            if sql_list:
+            ):
                 with transaction.atomic(using=db_name):
                     with conn.cursor() as cursor:
                         for sql in sql_list:
@@ -1619,9 +1612,10 @@ def skipIfDBFeature(*features):
     """Skip a test if a database has at least one of the named features."""
     return _deferredSkip(
         lambda: any(
-            getattr(connection.features, feature, False) for feature in features
+            getattr(connection.features, feature, False)
+            for feature in features
         ),
-        "Database has feature(s) %s" % ", ".join(features),
+        f'Database has feature(s) {", ".join(features)}',
         "skipIfDBFeature",
     )
 
@@ -1654,7 +1648,7 @@ class QuietWSGIRequestHandler(WSGIRequestHandler):
     requests received, so as to not clutter the test result output.
     """
 
-    def log_message(*args):
+    def log_message(self):
         pass
 
 
@@ -1702,9 +1696,11 @@ class FSFilesHandler(WSGIHandler):
         return serve(request, final_rel_path, document_root=self.get_base_dir())
 
     def __call__(self, environ, start_response):
-        if not self._should_handle(get_path_info(environ)):
-            return self.application(environ, start_response)
-        return super().__call__(environ, start_response)
+        return (
+            super().__call__(environ, start_response)
+            if self._should_handle(get_path_info(environ))
+            else self.application(environ, start_response)
+        )
 
 
 class _StaticFilesHandler(FSFilesHandler):
@@ -1807,22 +1803,20 @@ class LiveServerTestCase(TransactionTestCase):
     static_handler = _StaticFilesHandler
 
     @classproperty
-    def live_server_url(cls):
-        return "http://%s:%s" % (cls.host, cls.server_thread.port)
+    def live_server_url(self):
+        return f"http://{self.host}:{self.server_thread.port}"
 
     @classproperty
-    def allowed_host(cls):
-        return cls.host
+    def allowed_host(self):
+        return self.host
 
     @classmethod
     def _make_connections_override(cls):
-        connections_override = {}
-        for conn in connections.all():
-            # If using in-memory sqlite databases, pass the connections to
-            # the server thread.
-            if conn.vendor == "sqlite" and conn.is_in_memory_db():
-                connections_override[conn.alias] = conn
-        return connections_override
+        return {
+            conn.alias: conn
+            for conn in connections.all()
+            if conn.vendor == "sqlite" and conn.is_in_memory_db()
+        }
 
     @classmethod
     def setUpClass(cls):
@@ -1885,8 +1879,7 @@ class SerializeMixin:
         super().__init_subclass__(**kwargs)
         if cls.lockfile is None:
             raise ValueError(
-                "{}.lockfile isn't set. Set it to a unique value "
-                "in the base class.".format(cls.__name__)
+                f"{cls.__name__}.lockfile isn't set. Set it to a unique value in the base class."
             )
 
     @classmethod

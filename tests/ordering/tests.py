@@ -43,7 +43,7 @@ class OrderingTests(TestCase):
         )
         cls.author_1 = Author.objects.create(name="Name 1")
         cls.author_2 = Author.objects.create(name="Name 2")
-        for i in range(2):
+        for _ in range(2):
             Author.objects.create()
 
     def test_default_ordering(self):
@@ -303,7 +303,7 @@ class OrderingTests(TestCase):
 
     def test_no_reordering_after_slicing(self):
         msg = "Cannot reverse a query once a slice has been taken."
-        qs = Article.objects.all()[0:2]
+        qs = Article.objects.all()[:2]
         with self.assertRaisesMessage(TypeError, msg):
             qs.reverse()
         with self.assertRaisesMessage(TypeError, msg):

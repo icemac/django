@@ -205,9 +205,10 @@ class GeoModelTest(TestCase):
         point_select = connection.ops.select % "point"
         cities2 = list(
             City.objects.raw(
-                "select id, name, %s as point from geoapp_city" % point_select
+                f"select id, name, {point_select} as point from geoapp_city"
             )
         )
+
         self.assertEqual(len(cities1), len(cities2))
         with self.assertNumQueries(0):  # Ensure point isn't deferred.
             self.assertIsInstance(cities2[0].point, Point)
@@ -252,7 +253,7 @@ class GeoModelTest(TestCase):
         ]
         for klass in geometry_classes:
             g = klass(srid=4326)
-            feature = Feature.objects.create(name="Empty %s" % klass.__name__, geom=g)
+            feature = Feature.objects.create(name=f"Empty {klass.__name__}", geom=g)
             feature.refresh_from_db()
             if klass is LinearRing:
                 # LinearRing isn't representable in WKB, so GEOSGeomtry.wkb
@@ -480,9 +481,7 @@ class GeoLookupTest(TestCase):
         ]
         for lookup, geom in queries:
             with self.subTest(lookup=lookup):
-                self.assertNotIn(
-                    null, State.objects.filter(**{"poly__%s" % lookup: geom})
-                )
+                self.assertNotIn(null, State.objects.filter(**{f"poly__{lookup}": geom}))
 
     def test_wkt_string_in_lookup(self):
         # Valid WKT strings don't emit error logs.
@@ -571,7 +570,7 @@ class GeoLookupTest(TestCase):
         for lookup in lookups:
             with self.subTest(lookup):
                 City.objects.filter(
-                    **{"point__" + lookup: functions.Union("point", "point")}
+                    **{f"point__{lookup}": functions.Union("point", "point")}
                 ).exists()
 
     def test_subquery_annotation(self):
@@ -655,7 +654,7 @@ class GeoQuerySetTest(TestCase):
         # of the precisions of ref_line coordinates
         line = City.objects.aggregate(MakeLine("point"))["point__makeline"]
         self.assertTrue(
-            ref_line.equals_exact(line, tolerance=10e-5), "%s != %s" % (ref_line, line)
+            ref_line.equals_exact(line, tolerance=10e-5), f"{ref_line} != {line}"
         )
 
     @skipUnlessDBFeature("supports_union_aggr")

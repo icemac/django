@@ -64,7 +64,7 @@ class SkippingTestCase(SimpleTestCase):
                 with self.assertRaises(expected_exc):
                     func()
         except unittest.SkipTest:
-            self.fail("%s should not result in a skipped test." % func.__name__)
+            self.fail(f"{func.__name__} should not result in a skipped test.")
 
     def test_skip_unless_db_feature(self):
         """
@@ -221,16 +221,18 @@ class AssertNumQueriesTests(TestCase):
         person = Person.objects.create(name="test")
 
         self.assertNumQueries(
-            1, self.client.get, "/test_utils/get_person/%s/" % person.pk
+            1, self.client.get, f"/test_utils/get_person/{person.pk}/"
         )
+
 
         self.assertNumQueries(
-            1, self.client.get, "/test_utils/get_person/%s/" % person.pk
+            1, self.client.get, f"/test_utils/get_person/{person.pk}/"
         )
 
+
         def test_func():
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
 
         self.assertNumQueries(2, test_func)
 
@@ -254,7 +256,7 @@ class AssertNumQueriesUponConnectionTests(TransactionTestCase):
                 # Avoid infinite recursion. Creating a cursor calls
                 # ensure_connection() which is currently mocked by this method.
                 with connection.cursor() as cursor:
-                    cursor.execute("SELECT 1" + connection.features.bare_select_suffix)
+                    cursor.execute(f"SELECT 1{connection.features.bare_select_suffix}")
 
         ensure_connection = (
             "django.db.backends.base.base.BaseDatabaseWrapper.ensure_connection"
@@ -351,7 +353,7 @@ class assertQuerySetEqualTests(TestCase):
         )
 
     def test_maxdiff(self):
-        names = ["Joe Smith %s" % i for i in range(20)]
+        names = [f"Joe Smith {i}" for i in range(20)]
         Person.objects.bulk_create([Person(name=name) for name in names])
         names.append("Extra Person")
 
@@ -419,18 +421,18 @@ class CaptureQueriesContextManagerTests(TestCase):
 
     def test_with_client(self):
         with CaptureQueriesContext(connection) as captured_queries:
-            self.client.get("/test_utils/get_person/%s/" % self.person_pk)
+            self.client.get(f"/test_utils/get_person/{self.person_pk}/")
         self.assertEqual(len(captured_queries), 1)
         self.assertIn(self.person_pk, captured_queries[0]["sql"])
 
         with CaptureQueriesContext(connection) as captured_queries:
-            self.client.get("/test_utils/get_person/%s/" % self.person_pk)
+            self.client.get(f"/test_utils/get_person/{self.person_pk}/")
         self.assertEqual(len(captured_queries), 1)
         self.assertIn(self.person_pk, captured_queries[0]["sql"])
 
         with CaptureQueriesContext(connection) as captured_queries:
-            self.client.get("/test_utils/get_person/%s/" % self.person_pk)
-            self.client.get("/test_utils/get_person/%s/" % self.person_pk)
+            self.client.get(f"/test_utils/get_person/{self.person_pk}/")
+            self.client.get(f"/test_utils/get_person/{self.person_pk}/")
         self.assertEqual(len(captured_queries), 2)
         self.assertIn(self.person_pk, captured_queries[0]["sql"])
         self.assertIn(self.person_pk, captured_queries[1]["sql"])
@@ -463,14 +465,14 @@ class AssertNumQueriesContextManagerTests(TestCase):
         person = Person.objects.create(name="test")
 
         with self.assertNumQueries(1):
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
 
         with self.assertNumQueries(1):
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
 
         with self.assertNumQueries(2):
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
-            self.client.get("/test_utils/get_person/%s/" % person.pk)
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
+            self.client.get(f"/test_utils/get_person/{person.pk}/")
 
 
 @override_settings(ROOT_URLCONF="test_utils.urls")
@@ -675,13 +677,13 @@ class HTMLEqualTests(SimpleTestCase):
         ]
         for tag in self_closing_tags:
             with self.subTest(tag):
-                dom = parse_html("<p>Hello <%s> world</p>" % tag)
+                dom = parse_html(f"<p>Hello <{tag}> world</p>")
                 self.assertEqual(len(dom.children), 3)
                 self.assertEqual(dom[0], "Hello")
                 self.assertEqual(dom[1].name, tag)
                 self.assertEqual(dom[2], "world")
 
-                dom = parse_html("<p>Hello <%s /> world</p>" % tag)
+                dom = parse_html(f"<p>Hello <{tag} /> world</p>")
                 self.assertEqual(len(dom.children), 3)
                 self.assertEqual(dom[0], "Hello")
                 self.assertEqual(dom[1].name, tag)
@@ -2096,7 +2098,7 @@ class OverrideSettingsTests(SimpleTestCase):
         the value of django.contrib.staticfiles.storage.staticfiles_storage.
         """
         new_class = "ManifestStaticFilesStorage"
-        new_storage = "django.contrib.staticfiles.storage." + new_class
+        new_storage = f"django.contrib.staticfiles.storage.{new_class}"
         with self.settings(STATICFILES_STORAGE=new_storage):
             self.assertEqual(staticfiles_storage.__class__.__name__, new_class)
 
@@ -2144,7 +2146,7 @@ class TestBadSetUpTestData(TestCase):
             cls._in_atomic_block = connection.in_atomic_block
 
     @classmethod
-    def tearDownClass(Cls):
+    def tearDownClass(cls):
         # override to avoid a second cls._rollback_atomics() which would fail.
         # Normal setUpClass() methods won't have exception handling so this
         # method wouldn't typically be run.

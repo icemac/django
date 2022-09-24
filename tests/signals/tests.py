@@ -289,12 +289,12 @@ class SignalTests(BaseSignalSetup, TestCase):
         data = []
 
         def pre_save_handler(signal, sender, instance, **kwargs):
-            data.append("pre_save signal, %s" % instance)
+            data.append(f"pre_save signal, {instance}")
             if kwargs.get("raw"):
                 data.append("Is raw")
 
         def post_save_handler(signal, sender, instance, **kwargs):
-            data.append("post_save signal, %s" % instance)
+            data.append(f"post_save signal, {instance}")
             if "created" in kwargs:
                 if kwargs["created"]:
                     data.append("Is created")
@@ -304,12 +304,12 @@ class SignalTests(BaseSignalSetup, TestCase):
                 data.append("Is raw")
 
         def pre_delete_handler(signal, sender, instance, **kwargs):
-            data.append("pre_delete signal, %s" % instance)
-            data.append("instance.id is not None: %s" % (instance.id is not None))
+            data.append(f"pre_delete signal, {instance}")
+            data.append(f"instance.id is not None: {instance.id is not None}")
 
         def post_delete_handler(signal, sender, instance, **kwargs):
-            data.append("post_delete signal, %s" % instance)
-            data.append("instance.id is not None: %s" % (instance.id is not None))
+            data.append(f"post_delete signal, {instance}")
+            data.append(f"instance.id is not None: {instance.id is not None}")
 
         signals.pre_save.connect(pre_save_handler, weak=False)
         signals.post_save.connect(post_save_handler, weak=False)

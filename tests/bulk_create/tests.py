@@ -190,13 +190,11 @@ class BulkCreateTests(TestCase):
     def test_batch_same_vals(self):
         # SQLite had a problem where all the same-valued models were
         # collapsed to one insert.
-        Restaurant.objects.bulk_create([Restaurant(name="foo") for i in range(0, 2)])
+        Restaurant.objects.bulk_create([Restaurant(name="foo") for _ in range(2)])
         self.assertEqual(Restaurant.objects.count(), 2)
 
     def test_large_batch(self):
-        TwoFields.objects.bulk_create(
-            [TwoFields(f1=i, f2=i + 1) for i in range(0, 1001)]
-        )
+        TwoFields.objects.bulk_create([TwoFields(f1=i, f2=i + 1) for i in range(1001)])
         self.assertEqual(TwoFields.objects.count(), 1001)
         self.assertEqual(
             TwoFields.objects.filter(f1__gte=450, f1__lte=550).count(), 101
@@ -207,15 +205,13 @@ class BulkCreateTests(TestCase):
     def test_large_single_field_batch(self):
         # SQLite had a problem with more than 500 UNIONed selects in single
         # query.
-        Restaurant.objects.bulk_create([Restaurant() for i in range(0, 501)])
+        Restaurant.objects.bulk_create([Restaurant() for _ in range(501)])
 
     @skipUnlessDBFeature("has_bulk_insert")
     def test_large_batch_efficiency(self):
         with override_settings(DEBUG=True):
             connection.queries_log.clear()
-            TwoFields.objects.bulk_create(
-                [TwoFields(f1=i, f2=i + 1) for i in range(0, 1001)]
-            )
+            TwoFields.objects.bulk_create([TwoFields(f1=i, f2=i + 1) for i in range(1001)])
             self.assertLess(len(connection.queries), 10)
 
     def test_large_batch_mixed(self):
@@ -253,7 +249,7 @@ class BulkCreateTests(TestCase):
             self.assertLess(len(connection.queries), 10)
 
     def test_explicit_batch_size(self):
-        objs = [TwoFields(f1=i, f2=i) for i in range(0, 4)]
+        objs = [TwoFields(f1=i, f2=i) for i in range(4)]
         num_objs = len(objs)
         TwoFields.objects.bulk_create(objs, batch_size=1)
         self.assertEqual(TwoFields.objects.count(), num_objs)
@@ -268,12 +264,12 @@ class BulkCreateTests(TestCase):
         self.assertEqual(TwoFields.objects.count(), num_objs)
 
     def test_empty_model(self):
-        NoFields.objects.bulk_create([NoFields() for i in range(2)])
+        NoFields.objects.bulk_create([NoFields() for _ in range(2)])
         self.assertEqual(NoFields.objects.count(), 2)
 
     @skipUnlessDBFeature("has_bulk_insert")
     def test_explicit_batch_size_efficiency(self):
-        objs = [TwoFields(f1=i, f2=i) for i in range(0, 100)]
+        objs = [TwoFields(f1=i, f2=i) for i in range(100)]
         with self.assertNumQueries(2):
             TwoFields.objects.bulk_create(objs, 50)
         TwoFields.objects.all().delete()

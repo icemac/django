@@ -1105,13 +1105,16 @@ class ModelFormsetTest(TestCase):
         if it exists in the database (#24395).
         """
 
+
+
         class PoemForm2(forms.ModelForm):
             def save(self, commit=True):
                 poem = super().save(commit=False)
-                poem.name = "%s by %s" % (poem.name, poem.poet.name)
+                poem.name = f"{poem.name} by {poem.poet.name}"
                 if commit:
                     poem.save()
                 return poem
+
 
         PoemFormSet = inlineformset_factory(
             Poet, Poem, form=PoemForm2, fields="__all__"

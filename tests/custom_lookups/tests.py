@@ -26,7 +26,7 @@ class Div3Lookup(models.Lookup):
         lhs, params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params.extend(rhs_params)
-        return "mod(%s, 3) = %s" % (lhs, rhs), params
+        return f"mod({lhs}, 3) = {rhs}", params
 
 
 class Div3Transform(models.Transform):
@@ -38,7 +38,7 @@ class Div3Transform(models.Transform):
 
     def as_oracle(self, compiler, connection, **extra_context):
         lhs, lhs_params = compiler.compile(self.lhs)
-        return "mod(%s, 3)" % lhs, lhs_params
+        return f"mod({lhs}, 3)", lhs_params
 
 
 class Div3BilateralTransform(Div3Transform):
@@ -51,7 +51,7 @@ class Mult3BilateralTransform(models.Transform):
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = compiler.compile(self.lhs)
-        return "3 * (%s)" % lhs, lhs_params
+        return f"3 * ({lhs})", lhs_params
 
 
 class LastDigitTransform(models.Transform):
@@ -59,7 +59,7 @@ class LastDigitTransform(models.Transform):
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = compiler.compile(self.lhs)
-        return "SUBSTR(CAST(%s AS CHAR(2)), 2, 1)" % lhs, lhs_params
+        return f"SUBSTR(CAST({lhs} AS CHAR(2)), 2, 1)", lhs_params
 
 
 class UpperBilateralTransform(models.Transform):
@@ -68,7 +68,7 @@ class UpperBilateralTransform(models.Transform):
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = compiler.compile(self.lhs)
-        return "UPPER(%s)" % lhs, lhs_params
+        return f"UPPER({lhs})", lhs_params
 
 
 class YearTransform(models.Transform):
@@ -139,7 +139,7 @@ class Exactly(models.lookups.Exact):
 
 class SQLFuncMixin:
     def as_sql(self, compiler, connection):
-        return "%s()" % self.name, []
+        return f"{self.name}()", []
 
     @property
     def output_field(self):
@@ -219,7 +219,7 @@ class DateTimeTransform(models.Transform):
 
     def as_sql(self, compiler, connection):
         lhs, params = compiler.compile(self.lhs)
-        return "from_unixtime({})".format(lhs), params
+        return f"from_unixtime({lhs})", params
 
 
 class CustomStartsWith(StartsWith):
@@ -536,15 +536,16 @@ class YearLteTests(TestCase):
                     params,
                 )
 
-            setattr(YearExact, "as_" + connection.vendor, as_custom_sql)
+            setattr(YearExact, f"as_{connection.vendor}", as_custom_sql)
             self.assertIn(
                 "concat(", str(Author.objects.filter(birthdate__testyear=2012).query)
             )
         finally:
-            delattr(YearExact, "as_" + connection.vendor)
+            delattr(YearExact, f"as_{connection.vendor}")
         try:
             # The other way is to subclass the original lookup and register the
             # subclassed lookup instead of the original.
+
             class CustomYearExact(YearExact):
                 # This method should be named "as_mysql" for MySQL,
                 # "as_postgresql" for postgres and so on, but as we don't know
@@ -566,9 +567,10 @@ class YearLteTests(TestCase):
 
             setattr(
                 CustomYearExact,
-                "as_" + connection.vendor,
+                f"as_{connection.vendor}",
                 CustomYearExact.as_custom_sql,
             )
+
             YearTransform.register_lookup(CustomYearExact)
             self.assertIn(
                 "CONCAT(", str(Author.objects.filter(birthdate__testyear=2012).query)

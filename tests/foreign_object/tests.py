@@ -503,9 +503,7 @@ class MultiColumnFKTests(TestCase):
 
     @skipUnlessDBFeature("has_bulk_insert")
     def test_batch_create_foreign_object(self):
-        objs = [
-            Person(name="abcd_%s" % i, person_country=self.usa) for i in range(0, 5)
-        ]
+        objs = [Person(name=f"abcd_{i}", person_country=self.usa) for i in range(5)]
         Person.objects.bulk_create(objs, 10)
 
     def test_isnull_lookup(self):
@@ -578,7 +576,7 @@ class TestModelCheckTests(SimpleTestCase):
 class TestExtraJoinFilterQ(TestCase):
     @translation.override("fi")
     def test_extra_join_filter_q(self):
-        a = Article.objects.create(pub_date=datetime.datetime.today())
+        a = Article.objects.create(pub_date=datetime.datetime.now())
         ArticleTranslation.objects.create(
             article=a, lang="fi", title="title", body="body"
         )

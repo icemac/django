@@ -205,9 +205,7 @@ class FilteredRelationTests(TestCase):
             ),
         ).filter(book_alice__isnull=False)
         self.assertIn(
-            "INNER JOIN {} book_alice ON".format(
-                connection.ops.quote_name("filtered_relation_book")
-            ),
+            f'INNER JOIN {connection.ops.quote_name("filtered_relation_book")} book_alice ON',
             str(queryset.query),
         )
 

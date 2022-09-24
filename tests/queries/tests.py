@@ -548,7 +548,7 @@ class Queries1Tests(TestCase):
         local_recursion_limit = sys.getrecursionlimit() // 16
         msg = "Maximum recursion depth exceeded: too many subqueries."
         with self.assertRaisesMessage(RecursionError, msg):
-            for i in range(local_recursion_limit + 2):
+            for _ in range(local_recursion_limit + 2):
                 x = Tag.objects.filter(pk__in=x)
 
     def test_reasonable_number_of_subq_aliases(self):
@@ -1843,7 +1843,7 @@ class Queries5Tests(TestCase):
             [self.rank1, self.rank2, self.rank3],
         )
 
-        sql = "case when %s > 2 then 1 else 0 end" % connection.ops.quote_name("rank")
+        sql = f'case when {connection.ops.quote_name("rank")} > 2 then 1 else 0 end'
         qs = Ranking.objects.extra(select={"good": sql})
         self.assertEqual(
             [o.good for o in qs.extra(order_by=("-good",))], [True, False, False]
@@ -1861,7 +1861,7 @@ class Queries5Tests(TestCase):
     def test_ticket7256(self):
         # An empty values() call includes all aliases, including those from an
         # extra()
-        sql = "case when %s > 2 then 1 else 0 end" % connection.ops.quote_name("rank")
+        sql = f'case when {connection.ops.quote_name("rank")} > 2 then 1 else 0 end'
         qs = Ranking.objects.extra(select={"good": sql})
         dicts = qs.values().order_by("id")
         for d in dicts:
@@ -2182,7 +2182,7 @@ class Queries6Tests(TestCase):
                 {"tag_per_parent__max": 2},
             )
         sql = captured_queries[0]["sql"]
-        self.assertIn("AS %s" % connection.ops.quote_name("col1"), sql)
+        self.assertIn(f'AS {connection.ops.quote_name("col1")}', sql)
 
     def test_xor_subquery(self):
         self.assertSequenceEqual(
@@ -2352,8 +2352,9 @@ class SubqueryTests(TestCase):
     def test_ordered_subselect(self):
         "Subselects honor any manual ordering"
         query = DumbCategory.objects.filter(
-            id__in=DumbCategory.objects.order_by("-id")[0:2]
+            id__in=DumbCategory.objects.order_by("-id")[:2]
         )
+
         self.assertEqual(set(query.values_list("id", flat=True)), {3, 4})
 
         query = DumbCategory.objects.filter(
@@ -2376,8 +2377,9 @@ class SubqueryTests(TestCase):
         Slice a query that has a sliced subquery
         """
         query = DumbCategory.objects.filter(
-            id__in=DumbCategory.objects.order_by("-id")[0:2]
-        )[0:2]
+            id__in=DumbCategory.objects.order_by("-id")[:2]
+        )[:2]
+
         self.assertEqual({x.id for x in query}, {3, 4})
 
         query = DumbCategory.objects.filter(
@@ -2409,8 +2411,9 @@ class SubqueryTests(TestCase):
     def test_sliced_delete(self):
         "Delete queries can safely contain sliced subqueries"
         DumbCategory.objects.filter(
-            id__in=DumbCategory.objects.order_by("-id")[0:1]
+            id__in=DumbCategory.objects.order_by("-id")[:1]
         ).delete()
+
         self.assertEqual(
             set(DumbCategory.objects.values_list("id", flat=True)), {1, 2, 3}
         )
@@ -2429,30 +2432,32 @@ class SubqueryTests(TestCase):
         # Implicit values('id').
         self.assertSequenceEqual(
             NamedCategory.objects.filter(
-                id__in=NamedCategory.objects.distinct().order_by("name")[0:2],
+                id__in=NamedCategory.objects.distinct().order_by("name")[:2]
             )
             .order_by("name")
             .values_list("name", flat=True),
             ["first", "fourth"],
         )
+
         # Explicit values('id').
         self.assertSequenceEqual(
             NamedCategory.objects.filter(
                 id__in=NamedCategory.objects.distinct()
                 .order_by("-name")
-                .values("id")[0:2],
+                .values("id")[:2]
             )
             .order_by("name")
             .values_list("name", flat=True),
             ["second", "third"],
         )
+
         # Annotated value.
         self.assertSequenceEqual(
             DumbCategory.objects.filter(
                 id__in=DumbCategory.objects.annotate(double_id=F("id") * 2)
                 .order_by("id")
                 .distinct()
-                .values("double_id")[0:2],
+                .values("double_id")[:2]
             )
             .order_by("id")
             .values_list("id", flat=True),
@@ -2825,27 +2830,30 @@ class QuerySetSupportsPythonIdioms(TestCase):
 
     def test_slicing_without_step_is_lazy(self):
         with self.assertNumQueries(0):
-            self.get_ordered_articles()[0:5]
+            self.get_ordered_articles()[:5]
 
     def test_slicing_with_tests_is_not_lazy(self):
         with self.assertNumQueries(1):
-            self.get_ordered_articles()[0:5:3]
+            self.get_ordered_articles()[:5:3]
 
     def test_slicing_can_slice_again_after_slicing(self):
         self.assertSequenceEqual(
-            self.get_ordered_articles()[0:5][0:2],
+            self.get_ordered_articles()[:5][:2],
             [self.articles[0], self.articles[1]],
         )
+
         self.assertSequenceEqual(
-            self.get_ordered_articles()[0:5][4:], [self.articles[4]]
+            self.get_ordered_articles()[:5][4:], [self.articles[4]]
         )
-        self.assertSequenceEqual(self.get_ordered_articles()[0:5][5:], [])
+
+        self.assertSequenceEqual(self.get_ordered_articles()[:5][5:], [])
 
         # Some more tests!
         self.assertSequenceEqual(
-            self.get_ordered_articles()[2:][0:2],
+            self.get_ordered_articles()[2:][:2],
             [self.articles[2], self.articles[3]],
         )
+
         self.assertSequenceEqual(
             self.get_ordered_articles()[2:][:2],
             [self.articles[2], self.articles[3]],
@@ -2863,17 +2871,17 @@ class QuerySetSupportsPythonIdioms(TestCase):
     def test_slicing_cannot_filter_queryset_once_sliced(self):
         msg = "Cannot filter a query once a slice has been taken."
         with self.assertRaisesMessage(TypeError, msg):
-            Article.objects.all()[0:5].filter(id=1)
+            Article.objects.all()[:5].filter(id=1)
 
     def test_slicing_cannot_reorder_queryset_once_sliced(self):
         msg = "Cannot reorder a query once a slice has been taken."
         with self.assertRaisesMessage(TypeError, msg):
-            Article.objects.all()[0:5].order_by("id")
+            Article.objects.all()[:5].order_by("id")
 
     def test_slicing_cannot_combine_queries_once_sliced(self):
         msg = "Cannot combine queries once a slice has been taken."
         with self.assertRaisesMessage(TypeError, msg):
-            Article.objects.all()[0:1] & Article.objects.all()[4:5]
+            Article.objects.all()[:1] & Article.objects.all()[4:5]
 
     def test_slicing_negative_indexing_not_supported_for_single_element(self):
         """hint: inverting your ordering might do what you need"""
@@ -2885,7 +2893,7 @@ class QuerySetSupportsPythonIdioms(TestCase):
         """hint: inverting your ordering might do what you need"""
         msg = "Negative indexing is not supported."
         with self.assertRaisesMessage(ValueError, msg):
-            Article.objects.all()[0:-5]
+            Article.objects.all()[:-5]
         with self.assertRaisesMessage(ValueError, msg):
             Article.objects.all()[-1:]
 
@@ -2923,8 +2931,8 @@ class WeirdQuerysetSlicingTests(TestCase):
 
     def test_tickets_7698_10202(self):
         # People like to slice with '0' as the high-water mark.
-        self.assertQuerySetEqual(Article.objects.all()[0:0], [])
-        self.assertQuerySetEqual(Article.objects.all()[0:0][:10], [])
+        self.assertQuerySetEqual(Article.objects.all()[:0], [])
+        self.assertQuerySetEqual(Article.objects.all()[:0][:10], [])
         self.assertEqual(Article.objects.all()[:0].count(), 0)
         msg = "Cannot change a query once a slice has been taken."
         with self.assertRaisesMessage(TypeError, msg):
@@ -2936,12 +2944,12 @@ class WeirdQuerysetSlicingTests(TestCase):
 
     def test_empty_sliced_subquery(self):
         self.assertEqual(
-            Eaten.objects.filter(food__in=Food.objects.all()[0:0]).count(), 0
+            Eaten.objects.filter(food__in=Food.objects.all()[:0]).count(), 0
         )
 
     def test_empty_sliced_subquery_exclude(self):
         self.assertEqual(
-            Eaten.objects.exclude(food__in=Food.objects.all()[0:0]).count(), 1
+            Eaten.objects.exclude(food__in=Food.objects.all()[:0]).count(), 1
         )
 
     def test_zero_length_values_slicing(self):
@@ -4384,7 +4392,7 @@ class ValuesJoinPromotionTests(TestCase):
         )
         self.assertEqual(qs.count(), 1)
         tblname = connection.ops.quote_name(ObjectB._meta.db_table)
-        self.assertIn(" LEFT OUTER JOIN %s" % tblname, str(qs.query))
+        self.assertIn(f" LEFT OUTER JOIN {tblname}", str(qs.query))
 
 
 class ForeignKeyToBaseExcludeTests(TestCase):

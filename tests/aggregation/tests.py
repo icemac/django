@@ -1012,7 +1012,7 @@ class AggregateTestCase(TestCase):
         """
         Aggregation over sliced queryset works correctly.
         """
-        qs = Book.objects.order_by("-rating")[0:3]
+        qs = Book.objects.order_by("-rating")[:3]
         vals = qs.aggregate(average_top3_rating=Avg("rating"))["average_top3_rating"]
         self.assertAlmostEqual(vals, 4.5, places=2)
 
@@ -1032,8 +1032,7 @@ class AggregateTestCase(TestCase):
             self.assertEqual(len(captured_queries), 1)
             qstr = captured_queries[0]["sql"].lower()
             self.assertNotIn("for update", qstr)
-            forced_ordering = connection.ops.force_no_ordering()
-            if forced_ordering:
+            if forced_ordering := connection.ops.force_no_ordering():
                 # If the backend needs to force an ordering we make sure it's
                 # the only "ORDER BY" clause present in the query.
                 self.assertEqual(
@@ -1051,7 +1050,7 @@ class AggregateTestCase(TestCase):
         thedate = timezone.now()
         for i in range(10):
             Book.objects.create(
-                isbn="abcde{}".format(i),
+                isbn=f"abcde{i}",
                 name="none",
                 pages=10,
                 rating=4.0,
@@ -1060,6 +1059,7 @@ class AggregateTestCase(TestCase):
                 publisher=p1,
                 pubdate=thedate,
             )
+
 
         book = Book.objects.aggregate(price_sum=Sum("price"))
         self.assertEqual(book["price_sum"], Decimal("99999.80"))
@@ -1270,10 +1270,13 @@ class AggregateTestCase(TestCase):
         ):
             Book.objects.annotate(Max("id")).annotate(Sum("id__max"))
 
+
+
         class MyMax(Max):
             def as_sql(self, compiler, connection):
-                self.set_source_expressions(self.get_source_expressions()[0:1])
+                self.set_source_expressions(self.get_source_expressions()[:1])
                 return super().as_sql(compiler, connection)
+
 
         with self.assertRaisesMessage(
             FieldError, "Cannot compute Max('id__max'): 'id__max' is an aggregate"
@@ -1281,13 +1284,17 @@ class AggregateTestCase(TestCase):
             Book.objects.annotate(Max("id")).annotate(my_max=MyMax("id__max", "price"))
 
     def test_multi_arg_aggregate(self):
+
+
+
         class MyMax(Max):
             output_field = DecimalField()
 
             def as_sql(self, compiler, connection):
                 copy = self.copy()
-                copy.set_source_expressions(copy.get_source_expressions()[0:1])
+                copy.set_source_expressions(copy.get_source_expressions()[:1])
                 return super(MyMax, copy).as_sql(compiler, connection)
+
 
         with self.assertRaisesMessage(TypeError, "Complex aggregates require an alias"):
             Book.objects.aggregate(MyMax("pages", "price"))
@@ -1300,6 +1307,7 @@ class AggregateTestCase(TestCase):
         Book.objects.aggregate(max_field=MyMax("pages", "price"))
 
     def test_add_implementation(self):
+
         class MySum(Sum):
             pass
 
@@ -1314,7 +1322,7 @@ class AggregateTestCase(TestCase):
             substitutions.update(self.extra)
             return self.template % substitutions, params
 
-        setattr(MySum, "as_" + connection.vendor, lower_case_function_override)
+        setattr(MySum, f"as_{connection.vendor}", lower_case_function_override)
 
         qs = Book.objects.annotate(
             sums=MySum(
@@ -1330,7 +1338,7 @@ class AggregateTestCase(TestCase):
             self.extra["function"] = self.function.lower()
             return super(MySum, self).as_sql(compiler, connection)
 
-        setattr(MySum, "as_" + connection.vendor, lower_case_function_super)
+        setattr(MySum, f"as_{connection.vendor}", lower_case_function_super)
 
         qs = Book.objects.annotate(
             sums=MySum(
@@ -1347,7 +1355,7 @@ class AggregateTestCase(TestCase):
             substitutions.update(self.extra)
             return self.template % substitutions, ()
 
-        setattr(MySum, "as_" + connection.vendor, be_evil)
+        setattr(MySum, f"as_{connection.vendor}", be_evil)
 
         qs = Book.objects.annotate(
             sums=MySum(

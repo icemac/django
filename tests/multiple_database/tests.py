@@ -1275,8 +1275,7 @@ class QueryTestCase(TestCase):
 
         # Evaluating the query shouldn't work, either
         with self.assertRaisesMessage(ValueError, msg):
-            for obj in qs:
-                pass
+            pass
 
     def test_related_manager(self):
         "Related managers return managers, not querysets"
@@ -1969,10 +1968,7 @@ class AntiPetRouter:
     # passing pets to the 'other' database
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        if db == "other":
-            return model_name == "pet"
-        else:
-            return model_name != "pet"
+        return model_name == "pet" if db == "other" else model_name != "pet"
 
 
 class FixtureTestCase(TestCase):

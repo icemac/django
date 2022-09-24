@@ -211,8 +211,9 @@ class LookupTests(TestCase):
             ceil(test_range / max_query_params) if max_query_params else 1
         )
         Author.objects.bulk_create(
-            [Author() for i in range(test_range - Author.objects.count())]
+            [Author() for _ in range(test_range - Author.objects.count())]
         )
+
         authors = {author.pk: author for author in Author.objects.all()}
         with self.assertNumQueries(expected_num_queries):
             self.assertEqual(Author.objects.in_bulk(authors), authors)
@@ -296,7 +297,7 @@ class LookupTests(TestCase):
     def test_in_bulk_sliced_queryset(self):
         msg = "Cannot use 'limit' or 'offset' with in_bulk()."
         with self.assertRaisesMessage(TypeError, msg):
-            Article.objects.all()[0:5].in_bulk([self.a1.id, self.a2.id])
+            Article.objects.all()[:5].in_bulk([self.a1.id, self.a2.id])
 
     def test_values(self):
         # values() returns a list of dictionaries instead of object instances --
@@ -735,13 +736,14 @@ class LookupTests(TestCase):
                 [self.a1],
             )
         sql = ctx.captured_queries[0]["sql"]
-        self.assertIn("IN (%s)" % self.a1.pk, sql)
+        self.assertIn(f"IN ({self.a1.pk})", sql)
 
     def test_in_ignore_solo_none(self):
         with self.assertNumQueries(0):
             self.assertSequenceEqual(Article.objects.filter(id__in=[None]), [])
 
     def test_in_ignore_none_with_unhashable_items(self):
+
         class UnhashableInt(int):
             __hash__ = None
 
@@ -751,7 +753,7 @@ class LookupTests(TestCase):
                 [self.a1],
             )
         sql = ctx.captured_queries[0]["sql"]
-        self.assertIn("IN (%s)" % self.a1.pk, sql)
+        self.assertIn(f"IN ({self.a1.pk})", sql)
 
     def test_error_messages(self):
         # Programming errors are pointed out with nice error messages
@@ -1144,10 +1146,7 @@ class LookupTests(TestCase):
         stock_1 = Stock.objects.create(product=product, short=True, qty_available=180)
         qs = Stock.objects.filter(short=True)
         self.assertSequenceEqual(qs, [stock_1])
-        self.assertIn(
-            "%s = True" % connection.ops.quote_name("short"),
-            str(qs.query),
-        )
+        self.assertIn(f'{connection.ops.quote_name("short")} = True', str(qs.query))
 
     @skipUnless(connection.vendor == "mysql", "MySQL-specific workaround.")
     def test_exact_booleanfield_annotation(self):
@@ -1199,9 +1198,7 @@ class LookupTests(TestCase):
         )
         for lookup, result in tests:
             with self.subTest(lookup=lookup):
-                authors = Author.objects.filter(
-                    **{"name__%s" % lookup: Substr("alias", 1, 3)}
-                )
+                authors = Author.objects.filter(**{f"name__{lookup}": Substr("alias", 1, 3)})
                 self.assertCountEqual(authors, result)
 
     def test_custom_lookup_none_rhs(self):

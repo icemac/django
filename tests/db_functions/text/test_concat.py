@@ -64,7 +64,7 @@ class ConcatTests(TestCase):
         article = Article.objects.annotate(
             title_text=Concat("title", V(" - "), "text", output_field=TextField()),
         ).get(title="The Title")
-        self.assertEqual(article.title + " - " + article.text, article.title_text)
+        self.assertEqual(f"{article.title} - {article.text}", article.title_text)
         # Wrap the concat in something else to ensure that text is returned
         # rather than bytes.
         article = Article.objects.annotate(
@@ -72,7 +72,7 @@ class ConcatTests(TestCase):
                 Concat("title", V(" - "), "text", output_field=TextField())
             ),
         ).get(title="The Title")
-        expected = article.title + " - " + article.text
+        expected = f"{article.title} - {article.text}"
         self.assertEqual(expected.upper(), article.title_text)
 
     @skipUnless(connection.vendor == "sqlite", "sqlite specific implementation detail.")

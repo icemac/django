@@ -17,6 +17,7 @@ class OrderWithRespectToBaseTests(BaseOrderWithRespectToTests, TestCase):
 class OrderWithRespectToTests(SimpleTestCase):
     @isolate_apps("order_with_respect_to")
     def test_duplicate_order_field(self):
+
         class Bar(models.Model):
             class Meta:
                 app_label = "order_with_respect_to"
@@ -29,10 +30,9 @@ class OrderWithRespectToTests(SimpleTestCase):
                 order_with_respect_to = "bar"
                 app_label = "order_with_respect_to"
 
-        count = 0
-        for field in Foo._meta.local_fields:
-            if isinstance(field, models.OrderWrt):
-                count += 1
+        count = sum(
+            isinstance(field, models.OrderWrt) for field in Foo._meta.local_fields
+        )
 
         self.assertEqual(count, 1)
 

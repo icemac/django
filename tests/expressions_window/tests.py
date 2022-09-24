@@ -1151,7 +1151,7 @@ class WindowFunctionTests(TestCase):
                 )
             )
             .filter(department_salary_rank=1)
-            .order_by("department")[0:3],
+            .order_by("department")[:3],
             ["Adams", "Wilkinson", "Miller"],
             lambda employee: employee.name,
         )
@@ -1512,10 +1512,8 @@ class WindowFunctionTests(TestCase):
 
     @skipUnlessDBFeature("only_supports_unbounded_with_preceding_and_following")
     def test_unsupported_range_frame_start(self):
-        msg = (
-            "%s only supports UNBOUNDED together with PRECEDING and FOLLOWING."
-            % connection.display_name
-        )
+        msg = f"{connection.display_name} only supports UNBOUNDED together with PRECEDING and FOLLOWING."
+
         with self.assertRaisesMessage(NotSupportedError, msg):
             list(
                 Employee.objects.annotate(
@@ -1529,10 +1527,8 @@ class WindowFunctionTests(TestCase):
 
     @skipUnlessDBFeature("only_supports_unbounded_with_preceding_and_following")
     def test_unsupported_range_frame_end(self):
-        msg = (
-            "%s only supports UNBOUNDED together with PRECEDING and FOLLOWING."
-            % connection.display_name
-        )
+        msg = f"{connection.display_name} only supports UNBOUNDED together with PRECEDING and FOLLOWING."
+
         with self.assertRaisesMessage(NotSupportedError, msg):
             list(
                 Employee.objects.annotate(
