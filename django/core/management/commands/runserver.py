@@ -142,16 +142,17 @@ class Command(BaseCommand):
                 "Django version %(version)s, using settings %(settings)r\n"
                 "Starting development server at %(protocol)s://%(addr)s:%(port)s/\n"
                 "Quit the server with %(quit_command)s."
+                % {
+                    "version": self.get_version(),
+                    "settings": settings.SETTINGS_MODULE,
+                    "protocol": self.protocol,
+                    "addr": f"[{self.addr}]" if self._raw_ipv6 else self.addr,
+                    "port": self.port,
+                    "quit_command": quit_command,
+                }
             )
-            % {
-                "version": self.get_version(),
-                "settings": settings.SETTINGS_MODULE,
-                "protocol": self.protocol,
-                "addr": "[%s]" % self.addr if self._raw_ipv6 else self.addr,
-                "port": self.port,
-                "quit_command": quit_command,
-            }
         )
+
 
         try:
             handler = self.get_handler(*args, **options)
@@ -174,7 +175,7 @@ class Command(BaseCommand):
                 error_text = ERRORS[e.errno]
             except KeyError:
                 error_text = e
-            self.stderr.write("Error: %s" % error_text)
+            self.stderr.write(f"Error: {error_text}")
             # Need to use an OS exit because sys.exit doesn't work in a thread
             os._exit(1)
         except KeyboardInterrupt:

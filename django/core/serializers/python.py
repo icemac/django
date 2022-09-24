@@ -52,8 +52,7 @@ class Serializer(base.Serializer):
         if self.use_natural_foreign_keys and hasattr(
             field.remote_field.model, "natural_key"
         ):
-            related = getattr(obj, field.name)
-            if related:
+            if related := getattr(obj, field.name):
                 value = related.natural_key()
             else:
                 value = None

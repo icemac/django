@@ -25,14 +25,14 @@ class PostgresIndex(Index):
     def create_sql(self, model, schema_editor, using="", **kwargs):
         self.check_supported(schema_editor)
         statement = super().create_sql(
-            model, schema_editor, using=" USING %s" % (using or self.suffix), **kwargs
+            model, schema_editor, using=f" USING {using or self.suffix}", **kwargs
         )
-        with_params = self.get_with_params()
-        if with_params:
-            statement.parts["extra"] = " WITH (%s)%s" % (
-                ", ".join(with_params),
-                statement.parts["extra"],
-            )
+
+        if with_params := self.get_with_params():
+            statement.parts[
+                "extra"
+            ] = f' WITH ({", ".join(with_params)}){statement.parts["extra"]}'
+
         return statement
 
     def check_supported(self, schema_editor):
@@ -53,7 +53,7 @@ class BloomIndex(PostgresIndex):
             raise ValueError("BloomIndex.columns must be a list or tuple.")
         if len(columns) > len(self.fields):
             raise ValueError("BloomIndex.columns cannot have more values than fields.")
-        if not all(0 < col <= 4095 for col in columns):
+        if any((0 < col <= 4095 for col in columns)):
             raise ValueError(
                 "BloomIndex.columns must contain integers from 1 to 4095.",
             )
@@ -106,9 +106,7 @@ class BrinIndex(PostgresIndex):
     def get_with_params(self):
         with_params = []
         if self.autosummarize is not None:
-            with_params.append(
-                "autosummarize = %s" % ("on" if self.autosummarize else "off")
-            )
+            with_params.append(f'autosummarize = {"on" if self.autosummarize else "off"}')
         if self.pages_per_range is not None:
             with_params.append("pages_per_range = %d" % self.pages_per_range)
         return with_params
@@ -159,7 +157,7 @@ class GinIndex(PostgresIndex):
                 "gin_pending_list_limit = %d" % self.gin_pending_list_limit
             )
         if self.fastupdate is not None:
-            with_params.append("fastupdate = %s" % ("on" if self.fastupdate else "off"))
+            with_params.append(f'fastupdate = {"on" if self.fastupdate else "off"}')
         return with_params
 
 
@@ -182,7 +180,7 @@ class GistIndex(PostgresIndex):
     def get_with_params(self):
         with_params = []
         if self.buffering is not None:
-            with_params.append("buffering = %s" % ("on" if self.buffering else "off"))
+            with_params.append(f'buffering = {"on" if self.buffering else "off"}')
         if self.fillfactor is not None:
             with_params.append("fillfactor = %d" % self.fillfactor)
         return with_params

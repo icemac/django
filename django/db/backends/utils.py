@@ -125,10 +125,11 @@ class CursorDebugWrapper(CursorWrapper):
                 times = "?"
             self.db.queries_log.append(
                 {
-                    "sql": "%s times: %s" % (times, sql) if many else sql,
+                    "sql": f"{times} times: {sql}" if many else sql,
                     "time": "%.3f" % duration,
                 }
             )
+
             logger.debug(
                 "(%.3f) %s; args=%s; alias=%s",
                 duration,
@@ -176,7 +177,7 @@ def typecast_time(s):  # does NOT store time zone information
     else:
         microseconds = "0"
     return datetime.time(
-        int(hour), int(minutes), int(seconds), int((microseconds + "000000")[:6])
+        int(hour), int(minutes), int(seconds), int(f"{microseconds}000000"[:6])
     )
 
 
@@ -207,7 +208,7 @@ def typecast_timestamp(s):  # does NOT store time zone information
         int(times[0]),
         int(times[1]),
         int(seconds),
-        int((microseconds + "000000")[:6]),
+        int(f"{microseconds}000000"[:6]),
     )
 
 
